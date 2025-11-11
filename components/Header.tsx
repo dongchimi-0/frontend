@@ -49,7 +49,7 @@ export default function Header() {
       {/* 로고 */}
       <div className="flex-shrink-0">
         <Link href="/">
-          <img src={""} alt="E-Commerce" className="h-10 w-auto" />
+          <img src={"/imgs/logo.jpg"} alt="E-Commerce" className="h-10 w-auto" />
         </Link>
       </div>
 
