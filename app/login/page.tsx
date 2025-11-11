@@ -64,7 +64,7 @@ export default function LoginPage() {
         placeholder="아이디 (이메일)"
         value={id}
         onChange={(e) => setId(e.target.value)}
-        className="p-3 border border-gray-300 rounded-lg outline-none"
+        className="text-black p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
         required
       />
 
@@ -73,7 +73,7 @@ export default function LoginPage() {
         placeholder="비밀번호"
         value={pw}
         onChange={(e) => setPw(e.target.value)}
-        className="p-3 border border-gray-300 rounded-lg outline-none"
+        className="text-black p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
         required
       />
         <button
