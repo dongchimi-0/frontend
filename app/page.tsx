@@ -18,18 +18,20 @@ const banners = [
 ];
 
 export default function Page() {
-  const [showIntro, setShowIntro] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentBanner, setCurrentBanner] = useState(0);
-  const [mounted, setMounted] = useState(false);
+
 
   useEffect(() => {
-    setMounted(true);
+    const seen = localStorage.getItem("introSeen");
+
+    if (seen !== "true") {
+      window.location.href = "/intro";
+    }
   }, []);
 
-  
-  // 1) 상품 불러오기
+  // 3) 상품 불러오기
   useEffect(() => {
     fetch("http://localhost:8080/api/products")
       .then((res) => res.json())
@@ -40,7 +42,7 @@ export default function Page() {
       .catch(() => setLoading(false));
   }, []);
 
-  // 2) 배너 슬라이드 자동 전환
+  // 4) 배너 자동 전환
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
@@ -48,83 +50,11 @@ export default function Page() {
     return () => clearInterval(interval);
   }, []);
 
-  // 3) 인트로 자동 사라짐 (3초 후)
-  useEffect(() => {
-    const timer = setTimeout(() => setShowIntro(false), 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
-
-  // Intro 화면
-  const goHome = () => setShowIntro(false);
-
-  const introLines = ["Your Daily", "Journey"];
-  const renderLine = (line: string, lineIdx: number) => {
-    const chars = line.split("");
-
-    // 랜덤 순서 만들기
-    const delays = mounted
-      ? chars
-          .map((_, i) => i)
-          .sort(() => Math.random() - 0.5)
-          .map((i) => i * 0.1)
-      : chars.map(() => 0);  
-
-    return chars.map((char, idx) => {
-      const delay = delays[idx];
-
-      // O → 이미지
-      if (lineIdx === 1 && char.toLowerCase() === "o") {
-        return (
-          <img
-            key={idx}
-            src="/images/signature_b.png"
-            alt="O"
-            style={{ animationDelay: `${delay}s` }}
-            className="inline-block w-16 h-16 md:w-20 md:h-20 mx-[2px] -mb-2 animate-spin-slow"
-          />
-        );
-      }
-
-      return (
-        <span
-          key={idx}
-          style={{ animationDelay: `${delay}s` }}
-          className="inline-block mx-[1px] opacity-0 animate-spreadFade"
-        >
-          {char}
-        </span>
-      );
-    });
-  };
-
-  if (showIntro) {
-    return (
-      <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white">
-        {introLines.map((line, idx) => (
-          <h1
-            key={idx}
-            className="text-6xl md:text-8xl font-extrabold text-center leading-tight text-black"
-          >
-            {renderLine(line, idx)}
-          </h1>
-        ))}
-
-        <button
-          onClick={goHome}
-          className="mt-10 px-8 py-4 bg-blue-600 text-white rounded-full text-xl font-semibold"
-        >
-          Start Now
-        </button>
-      </div>
-    );
-  }
-
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-gray-500">
-        
+        loading...
         {/* 회전하는 시그니처 이미지 */}
         <img
           src="/images/signature_b.png"
