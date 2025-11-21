@@ -5,7 +5,6 @@ import { Heart, Plus, Minus, X } from "lucide-react";
 import { useUser } from "../../context/UserContext";
 import { useCart } from "../../context/CartContext";
 
-
 interface Option {
   optionId: number;
   value: string;
@@ -28,26 +27,35 @@ interface Product {
   options?: { optionId: number; optionValue: string }[];
 }
 
+/** ------------------------------
+ *  이미지 경로를 절대 경로로 변환해줌 (중요)
+ *  ------------------------------ */
+const toFullUrl = (url: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url; // 이미 절대경로면 그대로
+  return `http://localhost:8080${url}`;
+};
+
 export default function ProductDetailTop({ product }: { product: Product }) {
   const router = useRouter();
   const { user } = useUser();
   const { addToCart } = useCart();
 
   const [liked, setLiked] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [mainImage, setMainImage] = useState<string>(product.mainImg || "/images/default_main.png");
+  const [mainImage, setMainImage] = useState<string>(
+    toFullUrl(product.mainImg || "/images/default_main.png")
+  );
 
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
-
   const detailRef = useRef<HTMLDivElement>(null);
 
   const thumbnails: string[] = product.subImages?.length
-    ? product.subImages
+    ? product.subImages.map((img) => toFullUrl(img))
     : product.mainImg
-      ? [product.mainImg]
-      : [];
+    ? [toFullUrl(product.mainImg)]
+    : [];
 
-  // 좋아요 초기화
+  /** 좋아요 초기화 */
   useEffect(() => {
     const likedItems: number[] = JSON.parse(localStorage.getItem("likedProducts") || "[]");
     setLiked(likedItems.includes(product.productId));
@@ -68,7 +76,7 @@ export default function ProductDetailTop({ product }: { product: Product }) {
     localStorage.setItem("likedProducts", JSON.stringify(updated));
   };
 
-  // 커스텀 드롭다운
+  /** 옵션 선택 */
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -92,7 +100,10 @@ export default function ProductDetailTop({ product }: { product: Product }) {
     setDropdownOpen(false);
   };
 
-  const handleAddToCart = () => {
+  /** ------------------------------ */
+  /** 장바구니 담기 (세션 기반 완전 연동됨) */
+  /** ------------------------------ */
+  const handleAddToCart = async () => {
     if (!user) {
       if (window.confirm("로그인이 필요합니다. 로그인하시겠습니까?")) {
         router.push("/login");
@@ -100,25 +111,20 @@ export default function ProductDetailTop({ product }: { product: Product }) {
       return;
     }
 
-    if (product.isOption === 1 && selectedOptions.length === 0) {
+    if (product.isOption && selectedOptions.length === 0) {
       alert("옵션을 선택해주세요!");
       return;
     }
 
-    selectedOptions.forEach((opt) => {
-      addToCart({
-        productId: product.productId,
-        productName: product.productName,
-        price: product.sellPrice,
-        thumbnailUrl: mainImage,
-        option: opt.value,
-        color: selectedColor,
-        count: opt.count,
-        id: 0,
-      });
-    });
+    for (const opt of selectedOptions) {
+      await addToCart(
+        product.productId, // productId
+        opt.optionId,      // optionId
+        opt.count          // quantity
+      );
+    }
 
-    if (window.confirm("장바구니에 담았습니다.\n장바구니로 이동할까요?")) {
+    if (window.confirm("장바구니에 담았습니다.\n장바구니 페이지로 이동할까요?")) {
       router.push("/cart");
     }
   };
@@ -127,16 +133,19 @@ export default function ProductDetailTop({ product }: { product: Product }) {
     <div className="max-w-6xl mx-auto my-10 bg-white p-8 rounded-xl shadow flex flex-col">
       <div className="grid md:grid-cols-2 gap-10 items-start">
 
-        {/* 이미지 영역 */}
-        <div ref={detailRef} className="flex flex-row gap-6 justify-center">
+        {/* ------------------------------ */}
+        {/*  이미지 영역 */}
+        {/* ------------------------------ */}
+        <div ref={detailRef} className="flex flex-row gap-6">
           <div className="flex flex-col gap-2 overflow-y-auto max-h-[500px] min-w-[5rem]">
             {thumbnails.map((thumb, idx) => (
               <img
                 key={idx}
                 src={thumb}
                 alt={`썸네일 ${idx}`}
-                className={`w-20 h-20 object-contain rounded border ${mainImage === thumb ? "border-gray-800" : "border-gray-300"
-                  } hover:cursor-pointer`}
+                className={`w-20 h-20 object-contain rounded border ${
+                  mainImage === thumb ? "border-blue-600" : "border-gray-300"
+                } hover:cursor-pointer`}
                 onClick={() => setMainImage(thumb)}
               />
             ))}
@@ -151,31 +160,35 @@ export default function ProductDetailTop({ product }: { product: Product }) {
           </div>
         </div>
 
-        {/* 상품 정보 영역 */}
-        <div className="flex flex-col items-center md:items-start text-center md:text-left">
+        {/* ------------------------------ */}
+        {/*  상품 정보 */}
+        {/* ------------------------------ */}
+        <div className="flex flex-col">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.productName}</h1>
           <p className="text-gray-700 mb-6 max-w-md">{product.description || "설명이 없습니다."}</p>
 
-          <div className="mb-6 text-center md:text-left">
-            <p className="text-gray-400 text-sm line-through">{product.consumerPrice?.toLocaleString()}원</p>
-            {product.consumerPrice && product.sellPrice && product.consumerPrice > product.sellPrice && (
-              <span className="text-red-500 text-3xl font-bold">
-                {Math.round(((product.consumerPrice - product.sellPrice) / product.consumerPrice) * 100)}%
-              </span>
-            )}
-            <p className="text-3xl font-bold text-black">{product.sellPrice?.toLocaleString()}원</p>
+          <div className="mb-6">
+            <p className="text-gray-400 text-sm line-through">
+              {product.consumerPrice?.toLocaleString()}원
+            </p>
+            <p className="text-3xl font-bold text-blue-600">
+              {product.sellPrice?.toLocaleString()}원
+            </p>
             <p className="text-gray-600 mt-2 text-sm">재고: {product.stock}개</p>
           </div>
 
-          {/* 커스텀 드롭다운 */}
+          {/* 옵션 선택 드롭다운 */}
           {product.isOption && product.options?.length ? (
             <div className="mb-6 relative w-full" ref={dropdownRef}>
               <label className="block text-gray-700 mb-2 font-medium">옵션 선택</label>
+
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
                 className="w-full border border-gray-300 rounded-lg p-2 text-left cursor-pointer hover:ring-2 hover:ring-blue-400"
               >
-                {selectedOptions.length === 0 ? "옵션 선택" : selectedOptions.map((o) => o.value).join(", ")}
+                {selectedOptions.length === 0
+                  ? "옵션 선택"
+                  : selectedOptions.map((o) => o.value).join(", ")}
               </button>
 
               {dropdownOpen && (
@@ -183,8 +196,14 @@ export default function ProductDetailTop({ product }: { product: Product }) {
                   {product.options.map((opt) => (
                     <li
                       key={opt.optionId}
-                      onClick={() => handleSelectOption({ optionId: opt.optionId, value: opt.optionValue })}
-                      className={`p-2 hover:bg-blue-100 hover:cursor-pointer ${selectedOptions.find((o) => o.optionId === opt.optionId) ? "bg-gray-200" : ""}`}
+                      onClick={() =>
+                        handleSelectOption({ optionId: opt.optionId, value: opt.optionValue })
+                      }
+                      className={`p-2 hover:bg-blue-100 hover:cursor-pointer ${
+                        selectedOptions.find((o) => o.optionId === opt.optionId)
+                          ? "bg-gray-200"
+                          : ""
+                      }`}
                     >
                       {opt.optionValue}
                     </li>
@@ -194,18 +213,21 @@ export default function ProductDetailTop({ product }: { product: Product }) {
             </div>
           ) : null}
 
-          {/* 선택된 옵션 카드 */}
-          <div className="flex flex-col gap-4 mb-6 w-full">
+          {/* 선택 옵션 박스 */}
+          <div className="flex flex-col gap-4 mb-6">
             {selectedOptions.map((item) => (
               <div key={item.optionId} className="border p-4 rounded-lg shadow-sm flex justify-between items-center w-full">
                 <div className="flex-1">
                   <p className="font-medium">{item.value}</p>
+
                   <div className="flex items-center gap-3 mt-2">
                     <button
                       onClick={() =>
                         setSelectedOptions((prev) =>
                           prev.map((p) =>
-                            p.optionId === item.optionId ? { ...p, count: Math.max(1, p.count - 1) } : p
+                            p.optionId === item.optionId
+                              ? { ...p, count: Math.max(1, p.count - 1) }
+                              : p
                           )
                         )
                       }
@@ -230,6 +252,7 @@ export default function ProductDetailTop({ product }: { product: Product }) {
                     </button>
                   </div>
                 </div>
+
                 <button
                   onClick={() => setSelectedOptions((prev) => prev.filter((p) => p.optionId !== item.optionId))}
                   className="text-gray-400 hover:text-black hover:cursor-pointer ml-4"
