@@ -55,11 +55,12 @@ export default function Header() {
         <div className="ml-auto flex items-center gap-4 mr-3 text-sm">
           {user ? (
             <>
-              {user && (
-                <Link href="/admin/productList" className="hover:text-gray-300">
+              {user?.role === "ADMIN" && (
+                <Link href="/admin/products" className="hover:text-gray-300">
                   상품 관리
                 </Link>
               )}
+
               <Link href="/mypage" className="hover:text-gray-300">
                 마이페이지
               </Link>

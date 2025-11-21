@@ -18,7 +18,7 @@ export default function LoginPage() {
     }
 
     try {
-      // 백엔드 연동
+      // 백엔드 로그인 API 호출
       const response = await fetch("http://localhost:8080/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,10 +36,31 @@ export default function LoginPage() {
         return;
       }
 
-      // 로그인 성공
-      setUser({ name: id });
-      localStorage.setItem("user", JSON.stringify({ name: id })); // ✅ LocalStorage 저장
-      router.push("/"); // 홈으로 이동
+      // 서버에서 받은 사용자 정보
+      const data = await response.json();
+
+      // 로그인 성공 → UserContext에 전체 정보 저장
+      setUser({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,   // 관리자 권한 체크 
+      });
+
+      // localStorage에도 저장
+      localStorage.setItem("user", JSON.stringify({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      }));
+
+      // 관리자면 관리자 페이지로, 아니면 홈으로
+      if (data.role === "ADMIN") {
+        router.push("/admin/products");
+      } else {
+        router.push("/");
+      }
 
     } catch (error) {
       console.error(error);
@@ -62,7 +83,7 @@ export default function LoginPage() {
           placeholder="아이디 (이메일)"
           value={id}
           onChange={(e) => setId(e.target.value)}
-          className="text-black p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 ring-blue-500"
+          className="text-black p-3 border border-gray-300 rounded-lg"
           required
           autoFocus
         />
@@ -72,7 +93,7 @@ export default function LoginPage() {
           placeholder="비밀번호"
           value={pw}
           onChange={(e) => setPw(e.target.value)}
-          className="text-black p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 ring-blue-500"
+          className="text-black p-3 border border-gray-300 rounded-lg"
           required
         />
         <button

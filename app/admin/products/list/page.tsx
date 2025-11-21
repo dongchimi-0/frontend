@@ -10,7 +10,7 @@ interface Product {
   mainImg: string;
 }
 
-export default function AdminPage() {
+export default function AdminlistPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 

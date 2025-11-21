@@ -3,7 +3,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface User {
+  id: number;
   name: string;
+  email?: string;
+  role: string;  // 관리자 권한 체크
 }
 
 interface UserContextType {
