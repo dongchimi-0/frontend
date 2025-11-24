@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../../context/UserContext";
@@ -19,12 +20,18 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const response = await fetch("http://localhost:8080/api/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // ★ 세션 쿠키 저장
-        body: JSON.stringify({ email: id, password: pw }),
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: id.trim(),
+          password: pw.trim(),
+        }),
       });
+
 
       if (response.status === 404) {
         alert("존재하지 않는 사용자입니다.");
@@ -39,15 +46,22 @@ export default function LoginPage() {
         return;
       }
 
-      /** 
-       * ➜ 로그인 성공 시 세션이 이미 설정됨!
-       * ➜ 프론트에서 user 정보를 저장할 필요 없음.
-       * ➜ 필요하면 백엔드에서 /api/auth/me 같은 API 만들어서 로그인한 사용자 정보 불러오기.
-       */
+      const data = await response.json();
 
-      // 세션 기반 로그인 상태 표시 (Optional)
-      await refreshUser();
-      router.push("/");
+      /**  localStorage + setUser */
+      setUser({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      });
+
+      // ⭐ 권한 분기 처리
+      if (data.role === "ADMIN") {
+        router.push("/admin/list");
+      } else {
+        router.push("/");
+      }
 
     } catch (error) {
       console.error(error);
@@ -89,14 +103,6 @@ export default function LoginPage() {
           로그인
         </button>
       </form>
-
-      <button
-        type="button"
-        onClick={() => router.push("/admin/login")}
-        className="mt-4 text-gray-600 rounded-lg font-semibold underline hover:text-gray-800 transition cursor-pointer"
-      >
-        관리자로 로그인
-      </button>
     </div>
   );
 }
