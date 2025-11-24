@@ -24,6 +24,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType>({
   user: null,
   setUser: () => {},
+  refreshUser: async () => {},
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -58,29 +59,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   /** 앱 첫 로드 시 로그인 복원 */
   useEffect(() => {
-    const saved = localStorage.getItem("user");
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch (err) {
-        console.error("UserContext 복원 실패:", err);
-        localStorage.removeItem("user");
-      }
-    }
+    refreshUser();
   }, []);
 
-  /** 🌟 setUser 실행 시 localStorage에도 자동 저장 */
-  const updateUser = (data: User | null) => {
-    if (data) {
-      localStorage.setItem("user", JSON.stringify(data));
-    } else {
-      localStorage.removeItem("user");
-    }
-    setUser(data);
-  };
-
   return (
-    <UserContext.Provider value={{ user, setUser: updateUser }}>
+    <UserContext.Provider value={{ user, setUser, refreshUser }}>
       {children}
     </UserContext.Provider>
   );
