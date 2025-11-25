@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Category from "../../components/category";
-
+import Category from "@/components/Category";
 
 interface Product {
   productId: number;
