@@ -4,6 +4,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function SearchPage() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const params = useSearchParams();
   const keyword = params.get("keyword");
   const [results, setResults] = useState<any[]>([]);
@@ -15,7 +17,7 @@ export default function SearchPage() {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/search?query=${encodeURIComponent(keyword)}`);
+        const res = await fetch(`${API_URL}/api/search?query=${encodeURIComponent(keyword)}`);
         const data = await res.json();
         setResults(data.items || []);
       } catch (error) {
