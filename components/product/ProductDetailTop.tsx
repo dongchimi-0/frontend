@@ -57,29 +57,41 @@ export default function ProductDetailTop({ product }: { product: Product }) {
       ? [toFullUrl(product.mainImg)]
       : [];
 
-  /** 좋아요 초기화 */
   useEffect(() => {
     const likedItems: number[] = JSON.parse(localStorage.getItem("likedProducts") || "[]");
+    const likeCounts: Record<number, number> = JSON.parse(localStorage.getItem("likeCounts") || "{}");
+
+    // 좋아요 여부
     setLiked(likedItems.includes(product.productId));
+
+    // 기존 누적 좋아요 카운트 불러오기 (없으면 0)
+    setLikeCount(likeCounts[product.productId] || 0);
   }, [product.productId]);
 
   const handleLike = () => {
     const likedItems: number[] = JSON.parse(localStorage.getItem("likedProducts") || "[]");
-    let updated: number[];
+    const likeCounts: Record<number, number> = JSON.parse(localStorage.getItem("likeCounts") || "{}");
+    let updatedLiked: number[];
 
     if (likedItems.includes(product.productId)) {
       // 좋아요 취소
-      updated = likedItems.filter((id) => id !== product.productId);
+      updatedLiked = likedItems.filter((id) => id !== product.productId);
       setLiked(false);
-      setLikeCount((prev) => Math.max(prev - 1, 0)); // 음수 방지
+
+      likeCounts[product.productId] = Math.max((likeCounts[product.productId] || 1) - 1, 0);
+      setLikeCount(likeCounts[product.productId]);
     } else {
       // 좋아요 추가
-      updated = [...likedItems, product.productId];
+      updatedLiked = [...likedItems, product.productId];
       setLiked(true);
-      setLikeCount((prev) => prev + 1);
+
+      likeCounts[product.productId] = (likeCounts[product.productId] || 0) + 1;
+      setLikeCount(likeCounts[product.productId]);
     }
 
-    localStorage.setItem("likedProducts", JSON.stringify(updated));
+    // 저장
+    localStorage.setItem("likedProducts", JSON.stringify(updatedLiked));
+    localStorage.setItem("likeCounts", JSON.stringify(likeCounts));
   };
 
   /** 커스텀 드롭다운 / 옵션 선택 */
