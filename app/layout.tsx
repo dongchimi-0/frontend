@@ -1,35 +1,27 @@
-"use client";
-
 import "./globals.css";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import { Providers } from "./providers";
-import { usePathname } from "next/navigation";
+import ClientRoot from "./ClientRoot";
+import { WishlistProvider } from "../context/WishlistContext"; // 경로는 프로젝트 구조에 맞게 조정
+
+export const metadata = {
+  title: "YDJ",
+  description: "Your Daily Journey",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-
-  // /admin으로 시작하면 관리자 페이지
-  const isAdmin = pathname.startsWith("/admin");
-
   return (
     <html lang="ko">
       <head>
-        <title>YDJ</title>
+        <title>{metadata.title}</title>
+        <meta name="description" content={metadata.description} />
       </head>
-      <body className="flex flex-col min-h-screen">
+      <body className="flex flex-col min-h-screen bg-gray-50 text-gray-900">
         <Providers>
-          {/* 관리자 페이지가 아닐 때만 Header 출력 */}
-          {!isAdmin && <Header />}
-
-          <main className={`flex-1 bg-gray-100 overflow-x-hidden ${!isAdmin ? "py-16" : ""}`}>
-            <div className="mx-auto">
-              {children}
-            </div>
-          </main>
-
-          {/* 관리자 페이지가 아닐 때만 Footer 출력 */}
-          {!isAdmin && <Footer />}
+          <WishlistProvider>
+            <ClientRoot>
+              <main className="flex-1 w-full">{children}</main>
+            </ClientRoot>
+          </WishlistProvider>
         </Providers>
       </body>
     </html>

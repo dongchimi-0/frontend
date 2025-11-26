@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Heart, Plus, Minus, X } from "lucide-react";
-import { useUser } from "../../context/UserContext";
-import { useCart } from "../../context/CartContext";
+import { useUser } from "../../../context/UserContext";
+import { useCart } from "../../../context/CartContext";
+import { useWishlist } from "../../../context/WishlistContext";
 
 interface Option {
   optionId: number;
@@ -25,10 +26,11 @@ interface Product {
   stock: number;
   isOption?: number;
   options?: { optionId: number; optionValue: string }[];
-  categoryPath: string
+  categoryPath: string;
+  likeCount?: number;
+  userLiked?: boolean;
 }
 
-/** 절대 경로 변환 */
 const toFullUrl = (url: string) => {
   if (!url) return "";
   if (url.startsWith("http")) return url;
@@ -40,71 +42,49 @@ export default function ProductDetailTop({ product }: { product: Product }) {
   const { user } = useUser();
   const { addToCart } = useCart();
 
-  /** 이미지 경로가 아직 준비 안 되었으면 렌더 막기 */
   if (!product.mainImg) return null;
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
 
-  // const [mainImage, setMainImage] = useState<string>(
-  //   toFullUrl(product.mainImg || "/images/default_main.png")
-  // );
+  const [liked, setLiked] = useState<boolean>(product.userLiked ?? false);
+  const [likeCount, setLikeCount] = useState<number>(product.likeCount ?? 0);
 
-  const initialMainImg = toFullUrl(product.mainImg || "/images/default_main.png")
+  const initialMainImg = toFullUrl(product.mainImg || "/images/default_main.png");
   const [mainImage, setMainImage] = useState(initialMainImg);
 
-  /** mainImage 조차 없으면 렌더 X → 404 방지 */
   if (!mainImage) return null;
 
-  const thumbnails: string[] =
-    product.subImages?.length
-      ? product.subImages.map((img) => toFullUrl(img))
-      : product.mainImg
-      ? [initialMainImg]
-      : [];
-
-  if (thumbnails.length === 0) return null;
+  const thumbnails: string[] = product.subImages?.length
+    ? product.subImages.map((img) => toFullUrl(img))
+    : [initialMainImg];
 
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
   const detailRef = useRef<HTMLDivElement>(null);
 
-  /** 좋아요 초기화 */
-  useEffect(() => {
-    const likedItems: number[] = JSON.parse(localStorage.getItem("likedProducts") || "[]");
-    const likeCounts: Record<number, number> = JSON.parse(localStorage.getItem("likeCounts") || "{}");
+  /** 좋아요 API */
+  const handleLike = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/like/toggle/${product.productId}`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
 
-    setLiked(likedItems.includes(product.productId));
+      if (!res.ok) {
+        alert("좋아요 처리 실패");
+        return;
+      }
 
-    // 저장된 likeCount가 있으면 불러오기
-    setLikeCount(likeCounts[product.productId] || 0);
-  }, [product.productId]);
+      const likedResult = await res.json();
 
-  const handleLike = () => {
-    const likedItems: number[] = JSON.parse(localStorage.getItem("likedProducts") || "[]");
-    const likeCounts: Record<number, number> = JSON.parse(localStorage.getItem("likeCounts") || "{}");
-    let updatedLiked: number[];
-
-    if (likedItems.includes(product.productId)) {
-      // 좋아요 취소
-      updatedLiked = likedItems.filter((id) => id !== product.productId);
-      setLiked(false);
-
-      likeCounts[product.productId] = Math.max((likeCounts[product.productId] || 1) - 1, 0);
-      setLikeCount(likeCounts[product.productId]);
-    } else {
-      // 좋아요 추가
-      updatedLiked = [...likedItems, product.productId];
-      setLiked(true);
-
-      likeCounts[product.productId] = (likeCounts[product.productId] || 0) + 1;
-      setLikeCount(likeCounts[product.productId]);
+      setLiked(likedResult);
+      setLikeCount((prev) => (likedResult ? prev + 1 : Math.max(prev - 1, 0)));
+    } catch (e) {
+      console.error("좋아요 요청 실패", e);
     }
-
-    // 저장
-    localStorage.setItem("likedProducts", JSON.stringify(updatedLiked));
-    localStorage.setItem("likeCounts", JSON.stringify(likeCounts));
   };
 
-  /** 옵션 선택 */
+  /** 옵션 Dropdown */
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -119,8 +99,7 @@ export default function ProductDetailTop({ product }: { product: Product }) {
   }, []);
 
   const handleSelectOption = (opt: Option) => {
-    const already = selectedOptions.find((o) => o.optionId === opt.optionId);
-    if (already) {
+    if (selectedOptions.some((o) => o.optionId === opt.optionId)) {
       alert("이미 선택된 옵션입니다.");
       return;
     }
@@ -147,10 +126,11 @@ export default function ProductDetailTop({ product }: { product: Product }) {
     }
 
     if (window.confirm("장바구니에 담았습니다.\n장바구니 페이지로 이동할까요?")) {
-      router.push("/cart");
+      router.push("/mypage/cart");
     }
   };
 
+  /** 구매하기 */
   const handleBuyNow = () => {
     if (!user) {
       if (window.confirm("로그인이 필요합니다. 로그인하시겠습니까?")) {
@@ -164,7 +144,6 @@ export default function ProductDetailTop({ product }: { product: Product }) {
       return;
     }
 
-    // 결제 정보 전달
     const orderInfo = {
       productId: product.productId,
       productName: product.productName,
@@ -175,13 +154,13 @@ export default function ProductDetailTop({ product }: { product: Product }) {
 
     sessionStorage.setItem("checkoutData", JSON.stringify(orderInfo));
 
-    router.push("/checkout");
+    router.push("/order/checkout");
   };
 
   return (
     <div className="max-w-6xl mx-auto my-10 bg-white p-8 rounded-xl shadow flex flex-col">
       <div className="grid md:grid-cols-2 gap-10 items-start">
-
+        
         {/* 이미지 영역 */}
         <div ref={detailRef} className="flex flex-row gap-6">
           <div className="flex flex-col gap-2 overflow-y-auto max-h-[500px] min-w-[5rem]">
@@ -190,9 +169,8 @@ export default function ProductDetailTop({ product }: { product: Product }) {
                 key={idx}
                 src={thumb}
                 alt={`썸네일 ${idx}`}
-                className={`w-20 h-20 object-contain rounded border ${
-                  mainImage === thumb ? "border-gray-800" : "border-gray-300"
-                } hover:cursor-pointer`}
+                className={`w-20 h-20 object-contain rounded border ${mainImage === thumb ? "border-gray-800" : "border-gray-300"
+                  } hover:cursor-pointer`}
                 onClick={() => setMainImage(thumb)}
               />
             ))}
@@ -209,39 +187,59 @@ export default function ProductDetailTop({ product }: { product: Product }) {
 
         {/* 상품 정보 영역 */}
         <div className="flex flex-col items-center md:items-start text-center md:text-left">
-          {/* ⭐ 카테고리 경로 UI */}
+          
+          {/* 카테고리 경로 */}
           {product.categoryPath && (
             <div className="text-sm text-gray-500 mb-4 flex items-center gap-2">
-              {product.categoryPath
-                .split(">")
-                .map((cat: string, idx: number) => (
-                  <span key={idx} className="flex items-center gap-2">
-                    <span>{cat.trim()}</span>
-                    {idx < product.categoryPath.split(">").length - 1 && (
-                      <span className="text-gray-400">/</span>
-                    )}
-                  </span>
-                ))}
+              {product.categoryPath.split(">").map((cat: string, idx: number) => (
+                <span key={idx} className="flex items-center gap-2">
+                  <span>{cat.trim()}</span>
+                  {idx < product.categoryPath.split(">").length - 1 && (
+                    <span className="text-gray-400">/</span>
+                  )}
+                </span>
+              ))}
             </div>
           )}
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.productName}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {product.productName}
+          </h1>
 
+          {/* 가격 */}
           <div className="mb-6 text-center md:text-left">
-            <p className="text-gray-400 text-sm line-through">{product.consumerPrice?.toLocaleString()}원</p>
-            {product.consumerPrice && product.sellPrice && product.consumerPrice > product.sellPrice && (
-              <span className="text-red-500 text-3xl font-bold">
-                {Math.round(((product.consumerPrice - product.sellPrice) / product.consumerPrice) * 100)}%
-              </span>
-            )}
-            <p className="text-3xl font-bold text-black">{product.sellPrice?.toLocaleString()}원</p>
-            <p className="text-gray-600 mt-2 text-sm">재고: {product.stock}개</p>
+            <p className="text-gray-400 text-sm line-through">
+              {product.consumerPrice?.toLocaleString()}원
+            </p>
+
+            {product.consumerPrice &&
+              product.sellPrice &&
+              product.consumerPrice > product.sellPrice && (
+                <span className="text-red-500 text-3xl font-bold">
+                  {Math.round(
+                    ((product.consumerPrice - product.sellPrice) /
+                      product.consumerPrice) *
+                      100
+                  )}
+                  %
+                </span>
+              )}
+
+            <p className="text-3xl font-bold text-black">
+              {product.sellPrice?.toLocaleString()}원
+            </p>
+
+            <p className="text-gray-600 mt-2 text-sm">
+              재고: {product.stock}개
+            </p>
           </div>
 
           {/* 옵션 UI */}
           {product.isOption && product.options?.length ? (
             <div className="mb-6 relative w-full" ref={dropdownRef}>
-              <label className="block text-gray-700 mb-2 font-medium">옵션 선택</label>
+              <label className="block text-gray-700 mb-2 font-medium">
+                옵션 선택
+              </label>
 
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -258,13 +256,15 @@ export default function ProductDetailTop({ product }: { product: Product }) {
                     <li
                       key={opt.optionId}
                       onClick={() =>
-                        handleSelectOption({ optionId: opt.optionId, value: opt.optionValue })
+                        handleSelectOption({
+                          optionId: opt.optionId,
+                          value: opt.optionValue,
+                        })
                       }
-                      className={`p-2 hover:bg-blue-100 hover:cursor-pointer ${
-                        selectedOptions.some((o) => o.optionId === opt.optionId)
-                          ? "bg-gray-200"
-                          : ""
-                      }`}
+                      className={`p-2 hover:bg-blue-100 hover:cursor-pointer ${selectedOptions.some((o) => o.optionId === opt.optionId)
+                        ? "bg-gray-200"
+                        : ""
+                        }`}
                     >
                       {opt.optionValue}
                     </li>
@@ -274,7 +274,7 @@ export default function ProductDetailTop({ product }: { product: Product }) {
             </div>
           ) : null}
 
-          {/* 선택 옵션 목록 */}
+          {/* 선택된 옵션 */}
           <div className="flex flex-col gap-4 mb-6 w-full">
             {selectedOptions.map((item) => (
               <div
@@ -305,7 +305,9 @@ export default function ProductDetailTop({ product }: { product: Product }) {
                       onClick={() =>
                         setSelectedOptions((prev) =>
                           prev.map((p) =>
-                            p.optionId === item.optionId ? { ...p, count: p.count + 1 } : p
+                            p.optionId === item.optionId
+                              ? { ...p, count: p.count + 1 }
+                              : p
                           )
                         )
                       }
@@ -330,31 +332,37 @@ export default function ProductDetailTop({ product }: { product: Product }) {
             ))}
           </div>
 
-          {/* 버튼 */}
+          {/* 버튼 영역 */}
           <div className="flex flex-col md:flex-row items-center gap-4 w-full">
             <button
               onClick={handleLike}
-              className={`flex items-center gap-2 p-2 border rounded-lg transition-all w-full md:w-auto ${liked ? "bg-rose-50 border-rose-300" : "bg-white border-gray-300"
-                } hover:cursor-pointer`}
+              className={`flex items-center gap-2 p-2 border rounded-lg transition-all w-full md:w-auto ${
+                liked
+                  ? "bg-rose-50 border-rose-300"
+                  : "bg-white border-gray-300"
+              } hover:cursor-pointer`}
             >
               <Heart
-                className={`w-7 h-7 ${liked ? "fill-rose-500 stroke-rose-500" : "stroke-gray-400"
-                  }`}
+                className={`w-7 h-7 ${
+                  liked ? "fill-rose-500 stroke-rose-500" : "stroke-gray-400"
+                }`}
               />
-              {/* 좋아요 개수 */}
               <span
-                className={`text-base font-medium ${liked ? "text-rose-500" : "text-gray-500"
-                  }`}
+                className={`text-base font-medium ${
+                  liked ? "text-rose-500" : "text-gray-500"
+                }`}
               >
                 {likeCount}
               </span>
             </button>
+
             <button
               onClick={handleAddToCart}
               className="flex-1 w-full bg-gray-100 text-gray-600 py-3 rounded-lg hover:bg-gray-200 hover:cursor-pointer"
             >
               장바구니
             </button>
+
             <button
               onClick={handleBuyNow}
               className="flex-1 w-full bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-800 hover:cursor-pointer"
