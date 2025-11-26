@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-<<<<<<< HEAD
-import Category from "../../components/category";
-=======
 import CategoryTreeAccordion from "./components/CategoryTreeAccordion";
->>>>>>> main
 
 interface Product {
   productId: number;
