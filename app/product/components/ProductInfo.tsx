@@ -44,7 +44,7 @@ export default function ProductInfo({ product }: { product: Product }) {
   const handleLike = async () => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/like/toggle/${product.productId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/like/toggle/${product.productId}`,
         { method: "POST", credentials: "include" }
       );
       if (!res.ok) return alert("좋아요 처리 실패");
@@ -80,8 +80,38 @@ export default function ProductInfo({ product }: { product: Product }) {
   const handleAddToCart = async () => {
     if (!user) return router.push("/login");
     if (product.isOption && selectedOptions.length === 0) return alert("옵션을 선택해주세요!");
-    for (const opt of selectedOptions) await addToCart(product.productId, opt.optionId, opt.count);
-    if (window.confirm("장바구니에 담았습니다.\n장바구니 페이지로 이동할까요?")) router.push("/mypage/cart");
+
+    if (product.isOption) {
+      for (const opt of selectedOptions) {
+        await addToCart(
+          {
+            productId: product.productId,
+            productName: product.productName,
+            sellPrice: product.sellPrice,
+            stock: product.stock,
+            mainImg: product.mainImg,
+          },
+          opt.optionId,
+          opt.count
+        );
+      }
+    } else {
+      await addToCart(
+        {
+          productId: product.productId,
+          productName: product.productName,
+          sellPrice: product.sellPrice,
+          stock: product.stock,
+          mainImg: product.mainImg,
+        },
+        null,
+        1
+      );
+    }
+
+    if (window.confirm("장바구니에 담았습니다.\n장바구니 페이지로 이동할까요?")) {
+      router.push("/mypage/cart");
+    }
   };
 
   /** 구매하기 */
@@ -154,9 +184,8 @@ export default function ProductInfo({ product }: { product: Product }) {
                 <li
                   key={opt.optionId}
                   onClick={() => handleSelectOption({ optionId: opt.optionId, value: opt.optionValue })}
-                  className={`p-2 hover:bg-blue-100 hover:cursor-pointer ${
-                    selectedOptions.some((o) => o.optionId === opt.optionId) ? "bg-gray-200" : ""
-                  }`}
+                  className={`p-2 hover:bg-blue-100 hover:cursor-pointer ${selectedOptions.some((o) => o.optionId === opt.optionId) ? "bg-gray-200" : ""
+                    }`}
                 >
                   {opt.optionValue}
                 </li>
@@ -217,14 +246,12 @@ export default function ProductInfo({ product }: { product: Product }) {
       <div className="flex flex-col md:flex-row items-center gap-4 w-full">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-2 p-2 border rounded-lg transition-all w-full md:w-auto ${
-            liked ? "bg-rose-50 border-rose-300" : "bg-white border-gray-300"
-          } hover:cursor-pointer`}
+          className={`flex items-center gap-2 p-2 border rounded-lg transition-all w-full md:w-auto ${liked ? "bg-rose-50 border-rose-300" : "bg-white border-gray-300"
+            } hover:cursor-pointer`}
         >
           <Heart
-            className={`w-7 h-7 ${
-              liked ? "fill-rose-500 stroke-rose-500" : "stroke-gray-400"
-            }`}
+            className={`w-7 h-7 ${liked ? "fill-rose-500 stroke-rose-500" : "stroke-gray-400"
+              }`}
           />
           <span className={`text-base font-medium ${liked ? "text-rose-500" : "text-gray-500"}`}>
             {likeCount}

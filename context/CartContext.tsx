@@ -6,7 +6,7 @@ import axios from "axios";
 
 axios.defaults.withCredentials = true;
 
-interface CartItem {
+export interface CartItem {
   cartId: number;
   productId: number;
   productName: string;
@@ -23,10 +23,18 @@ interface CartItem {
   } | null;
 }
 
+export interface CartProduct {
+  productId: number;
+  productName: string;
+  sellPrice: number;
+  stock: number;
+  mainImg?: string;
+}
+
 interface CartContextType {
   cart: CartItem[];
   loadCart: () => void;
-  addToCart: (productId: number, optionId: number | null, quantity: number) => void;
+  addToCart: (product: CartProduct, optionId: number | null, quantity: number) => void;
   updateQuantity: (cartId: number, quantity: number) => void;
   changeOption: (cartId: number, newOptionId: number) => void;
   deleteItem: (cartId: number) => void;
@@ -40,6 +48,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const isAdmin = user?.role?.toUpperCase() === "ADMIN";
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   /** 서버에서 장바구니 불러오기 */
   const loadCart = () => {
     if (!user || !user.id || isAdmin) {
@@ -48,11 +58,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     axios
-      .get("http://localhost:8080/api/cart")
+      .get(`${API_URL}/api/cart`)
       .then((res) => {
         const items = res.data.items || [];
         setCart(items);
-        localStorage.setItem("cart", JSON.stringify(items)); // state 기준 localStorage 덮어쓰기
+        localStorage.setItem("cart", JSON.stringify(items));
       })
       .catch((err) => {
         console.error("장바구니 불러오기 실패:", err);
@@ -62,65 +72,83 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   /** 장바구니에 추가 */
-  const addToCart = async (productId: number, optionId: number | null, quantity: number) => {
+  const addToCart = async (product: CartProduct, optionId: number | null, quantity: number) => {
     if (!user || isAdmin) return;
 
-    try {
-      const res = await axios.post("http://localhost:8080/api/cart", { productId, optionId, quantity });
-      if (res.data?.items) {
-        setCart(res.data.items); // 서버에서 바로 받은 데이터로 상태 갱신
-        localStorage.setItem("cart", JSON.stringify(res.data.items));
+    setCart((prevCart) => {
+      const index = prevCart.findIndex(
+        (item) => item.productId === product.productId && item.option?.optionId === optionId
+      );
+
+      let newCart: CartItem[];
+      if (index >= 0) {
+        newCart = [...prevCart];
+        newCart[index] = {
+          ...newCart[index],
+          quantity: newCart[index].quantity + quantity,
+        };
       } else {
-        loadCart(); // 서버가 items를 안보낼 경우 fallback
+        newCart = [
+          ...prevCart,
+          {
+            cartId: Date.now(), // 임시 ID
+            productId: product.productId,
+            productName: product.productName,
+            thumbnail: product.mainImg || "",
+            quantity,
+            price: product.sellPrice,
+            stock: product.stock,
+            soldOut: product.stock === 0,
+            option: optionId ? { optionId, optionType: "", optionTitle: null, optionValue: null } : null,
+          },
+        ];
       }
+
+      localStorage.setItem("cart", JSON.stringify(newCart));
+      return newCart;
+    });
+
+    // 서버 동기화
+    try {
+      await axios.post(`${API_URL}/api/cart`, { productId: product.productId, optionId, quantity });
+      loadCart();
     } catch (err) {
       console.error("장바구니 담기 실패:", err);
     }
   };
 
-  /** 수량 변경 */
   const updateQuantity = (cartId: number, quantity: number) => {
     if (!user || isAdmin) return;
-
     axios
-      .put("http://localhost:8080/api/cart/quantity", { cartId, quantity })
+      .put(`${API_URL}/api/cart/quantity`, { cartId, quantity })
       .then(() => loadCart())
       .catch((err) => console.error("수량 변경 실패:", err));
   };
 
-  /** 옵션 변경 */
   const changeOption = (cartId: number, newOptionId: number) => {
     if (!user || isAdmin) return;
-
     axios
-      .put("http://localhost:8080/api/cart/option", { cartId, newOptionId })
+      .put(`${API_URL}/api/cart/option`, { cartId, newOptionId })
       .then(() => loadCart())
       .catch((err) => console.error("옵션 변경 실패:", err));
   };
 
-  /** 항목 삭제 */
   const deleteItem = (cartId: number) => {
     if (!user || isAdmin) return;
-
     axios
-      .delete(`http://localhost:8080/api/cart/${cartId}`)
+      .delete(`${API_URL}/api/cart/${cartId}`)
       .then(() => loadCart())
       .catch((err) => console.error("아이템 삭제 실패:", err));
   };
 
-  /** 장바구니 비우기 */
   const clearCart = () => {
     setCart([]);
     localStorage.removeItem("cart");
-    // 서버에도 비우기 요청
     if (user && !isAdmin) {
-      axios
-        .delete("http://localhost:8080/api/cart")
-        .catch((err) => console.error("장바구니 전체 삭제 실패:", err));
+      axios.delete(`${API_URL}/api/cart`).catch((err) => console.error("장바구니 전체 삭제 실패:", err));
     }
   };
 
-  /** 로그인/로그아웃 또는 role 변경 감지 */
   useEffect(() => {
     if (!user || !user.id || isAdmin) {
       setCart([]);
@@ -132,15 +160,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{
-        cart,
-        loadCart,
-        addToCart,
-        updateQuantity,
-        changeOption,
-        deleteItem,
-        clearCart,
-      }}
+      value={{ cart, loadCart, addToCart, updateQuantity, changeOption, deleteItem, clearCart }}
     >
       {children}
     </CartContext.Provider>
