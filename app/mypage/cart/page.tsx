@@ -141,11 +141,7 @@ export default function CartPage() {
 
             <button
               onClick={() => router.push("/order/checkout")}
-<<<<<<< HEAD
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold transition cursor-pointer"
-=======
               className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-700 font-semibold transition cursor-pointer"
->>>>>>> 6126007 (전체페이지 ui및 디자인 수정, ui/... 파일들로 스타일 통일, signup에서 join으로 폴더 이름 변경)
             >
               {totalPrice.toLocaleString()}원 결제하기
             </button>
