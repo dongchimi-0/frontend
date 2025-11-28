@@ -1,53 +1,15 @@
 "use client";
 
 import { use } from "react";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-interface Product {
-  productId: number;
-  productName: string;
-  sellPrice: number;
-  stock: number;
-  mainImg?: string;
-}
-
-const toFullUrl = (url: string) => {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `${process.env.NEXT_PUBLIC_API_URL}${url}`;
-};
+import { useCategoryProducts } from "@/hooks/useCategoryProducts";
+import { toFullUrl } from "@/lib/utils/toFullUrl";
 
 export default function CategoryPage({ params }: { params: Promise<{ leafCode: string }> }) {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
-  
+  const { leafCode } = use(params);
   const router = useRouter();
-  const { leafCode } = use(params); // ⭐ params 언랩
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!leafCode) return;
-
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `${API_URL}/api/products/category/${leafCode}`
-        );
-
-        const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        console.error("상품 조회 실패:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [leafCode]);
+  const { products, loading } = useCategoryProducts(leafCode);
 
   return (
     <div className="p-6 min-h-screen">
