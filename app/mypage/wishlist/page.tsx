@@ -36,7 +36,7 @@ import { Trash2 } from "lucide-react";
 
 export default function WishlistPage() {
   const { likedProducts, productInfos, toggleWishlist, loading } = useWishlist();
-
+  
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -53,6 +53,7 @@ export default function WishlistPage() {
     );
   }
 
+  
   return (
     <div className="py-10 px-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">찜한 상품</h1>
@@ -60,6 +61,9 @@ export default function WishlistPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
         {likedProducts.map((productId) => {
           const product = productInfos[productId];
+
+          // product 정보가 아직 로딩되지 않았거나 없는 경우 렌더링 skip
+          if (!product) return null;
 
           return (
             <div
