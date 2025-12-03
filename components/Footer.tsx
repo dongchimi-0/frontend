@@ -25,7 +25,8 @@ export default function Footer() {
           <ul className="text-gray-400 text-sm space-y-1">
             <li><Link href="/" className="hover:text-white transition">홈</Link></li>
             <li><Link href="/mypage" className="hover:text-white transition">마이페이지</Link></li>
-            <li><Link href="/cart" className="hover:text-white transition">장바구니</Link></li>
+            <li><Link href="/mypage/cart" className="hover:text-white transition">장바구니</Link></li>
+            <li><Link href="/mypage/wishlist" className="hover:text-white transition">찜한 상품</Link></li>
           </ul>
         </div>
 
@@ -37,10 +38,10 @@ export default function Footer() {
             <li className="flex items-center gap-1">
               <Phone size={14} /> 010-1234-5678</li>
             <li className="flex items-center gap-1">
-              <Facebook size={14} /> <Link href="#">Facebook</Link>
+              <Facebook size={14} /> <Link href="https://facebook.com">Facebook</Link>
             </li>
             <li className="flex items-center gap-1">
-              <Instagram size={14} /> <Link href="#">Instagram</Link>
+              <Instagram size={14} /> <Link href="https://instagram.com">Instagram</Link>
             </li>
           </ul>
         </div>
