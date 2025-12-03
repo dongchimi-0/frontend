@@ -11,7 +11,6 @@ interface OrderItem {
   productId: number;
   productName: string;
   mainImg?: string;
-  optionId?: number | null;
   optionValue?: string | null;
   quantity: number;
   price: number;
