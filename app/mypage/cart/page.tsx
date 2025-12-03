@@ -39,7 +39,7 @@ import { useRouter } from "next/navigation";
  */
 export default function CartPage() {
   const router = useRouter();
-  const { cart, initialLoading, deleteItem, updateQuantity } = useCart();
+  const { cart, initialLoading, deleteItem, updateQuantity, clearCart } = useCart();
 
   // 1)초기 로딩 중일 때
   if (initialLoading) {
@@ -76,6 +76,14 @@ export default function CartPage() {
         {/* 장바구니 목록 */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow p-6 flex flex-col gap-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">장바구니</h1>
+
+          <button
+            onClick={clearCart}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+          >
+            장바구니 전체 삭제
+          </button>
+
 
           {cart.map((item) => (
             <div

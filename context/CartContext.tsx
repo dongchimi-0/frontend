@@ -156,14 +156,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (isAdmin || !user) return;
 
     axios
-      .delete(`${API_URL}/api/cart/${cartId}`)
+      .delete(`${API_URL}/api/cart${cartId}`)
       .then(() => debouncedLoadCart());
   }
 
   /** 장바구니 비우기 */
   function clearCart() {
-    setCart([]);
+    if (isAdmin || !user) return;
+
+    axios
+      .delete(`${API_URL}/api/cart`, { withCredentials: true })
+      .then(() => setCart([]));  // 프론트 상태 비우기
   }
+
 
   /** --------------------------------------
    * 로그인 상태 변화 감지하여 장바구니 로딩
