@@ -122,6 +122,11 @@ export default function ProductNewPage() {
             sellPrice: (product.sellPrice || 0) + (opt.extraPrice || 0),
           }))
         : [],
+        subImages: product.subImages?.map((img) => ({
+          imageUrl: img.imageUrl, // 이미지 URL을 추출
+          sortOrder: img.sortOrder, // 정렬 순서
+          productId: img.productId, // productId
+        })) || [],
     };
 
     // 이미지를 ProductImage로 추가하기
@@ -132,7 +137,7 @@ export default function ProductNewPage() {
     }));
 
     try {
-      const res = await fetch(`${API_URL}/api/admin/products`, {
+      const res = await fetch(`${API_URL}/api/admin/products/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -142,12 +147,6 @@ export default function ProductNewPage() {
       alert("상품이 등록되었습니다.");
       router.push("/admin/productList");
 
-      // 이미지를 ProductImage 테이블에 저장
-      await fetch(`${API_URL}/api/admin/products/images`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images }),
-      });
     } catch (err) {
       console.error(err);
       alert("상품 등록 중 오류가 발생했습니다.");
