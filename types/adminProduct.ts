@@ -4,7 +4,10 @@ export interface AdminProductOption {
   optionType: "N" | "C";      // 옵션 타입: N = 일반, C = 색상
   optionTitle: string;        // 옵션 제목: 예) 색상, 사이즈
   optionValue: string;        // 옵션 값: 예) 블랙, S, M
-  sellPrice: number;          // 옵션별 판매가 (없으면 0 => 기본 판매가 그대로 사용)
+  // 관리자 입력값
+  extraPrice: number;     // 옵션 추가금 (프론트/비즈니스용)
+  
+  sellPrice?: number;          // 옵션별 판매가 (없으면 0 => 기본 판매가 그대로 사용)
   stock: number;              // 해당 옵션 재고
   isShow: boolean;            // 옵션 노출 여부
   colorCode?: string;         // 색상 코드 (#FF0000 등, 색상 옵션일 때만 사용 가능)
