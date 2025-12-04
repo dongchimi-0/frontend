@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 
 import Input from "../../ui/Input";
 import Button from "../../ui/Button";
-import ImageUpload from "../../ui/ImageUpload";
-import MultiImageUpload from "../../ui/MultiImageUpload"; // MultiImageUpload
+import MultiImageUpload from "../../ui/MultiImageUpload";
 import { Plus, Trash2 } from "lucide-react";
 
 import type { AdminProduct, AdminProductOption } from "@/types/adminProduct";
@@ -14,6 +13,7 @@ import type { CategoryTree } from "@/types/category";
 
 export default function ProductNewPage() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
   const router = useRouter();
 
   // ------------------------------
@@ -39,6 +39,7 @@ export default function ProductNewPage() {
   const [categoryTree, setCategoryTree] = useState<CategoryTree | null>(null);
   const [selectedBig, setSelectedBig] = useState<string>("");
   const [selectedMid, setSelectedMid] = useState<string>("");
+  const [subImageUrl, setSubImageUrl] = useState<string>("");
 
   // ------------------------------
   // 공통 핸들러
@@ -83,6 +84,13 @@ export default function ProductNewPage() {
     }));
   };
 
+  const removeSubImage = (index: number) => {
+    setProduct((prev) => ({
+      ...prev,
+      subImages: prev.subImages?.filter((_, i) => i !== index),
+    }));
+  };
+
   // ------------------------------
   // 카테고리 트리 fetch
   // ------------------------------
@@ -118,9 +126,9 @@ export default function ProductNewPage() {
 
     // 이미지를 ProductImage로 추가하기
     const images = product.subImages?.map((imgUrl, idx) => ({
-      imageUrl: imgUrl,
+      imageUrl: `${imgUrl}`, // 이미지 URL
       sortOrder: idx + 1, // 이미지 순서
-      productId: product.productId, // 제품 ID
+      productId: product.productId,
     }));
 
     try {
@@ -140,12 +148,30 @@ export default function ProductNewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images }),
       });
-
     } catch (err) {
       console.error(err);
       alert("상품 등록 중 오류가 발생했습니다.");
     }
   };
+
+  const handleAddSubImage = () => {
+    if (subImageUrl) {
+      setProduct((prev) => ({
+        ...prev,
+        subImages: [
+          ...(prev.subImages || []), // subImages가 없으면 빈 배열로 처리
+          {
+            imageUrl: subImageUrl,  // 추가할 이미지 URL
+            sortOrder: prev.subImages ? prev.subImages.length + 1 : 1, // 순서 지정
+            productId: prev.productId || 0,  // productId를 추가 (없으면 기본값 0)
+          },
+        ],
+      }));
+      setSubImageUrl("");  // URL 추가 후 입력창 비우기
+    }
+  };
+
+
 
 
   // ==============================
@@ -158,21 +184,68 @@ export default function ProductNewPage() {
           상품 등록
         </h1>
 
-        <div className="flex flex-col md:flex-row gap-8 mt-6">
-          {/* 좌측: 이미지 업로드 */}
-          <div className="flex flex-col gap-6 md:w-1/2">
-            <p className="font-semibold">대표 이미지</p>
-            <ImageUpload
-              image={product.mainImg}
-              onChange={(val) => handleChange("mainImg", val)}
-            />
+        {/* 대표 이미지 입력 */}
+        <div className="mb-4">
+          <Input
+            label="대표 이미지 URL"
+            value={product.mainImg}
+            onChange={(e) => setProduct({ ...product, mainImg: e.target.value })}
+            placeholder="대표 이미지 URL을 입력하세요"
+          />
+          {product.mainImg && (
+            <div className="mt-2">
+              <img
+                src={`${IMAGE_BASE_URL}${product.mainImg}`}
+                alt="대표 이미지 미리보기"
+                className="w-120px h-240px"
+              />
+            </div>
+          )}
+        </div>
 
-            <p className="font-semibold mt-4">상세 이미지</p>
-            <MultiImageUpload
-              images={product.subImages?.map((image) => image.imageUrl) || []}  // ProductImage[]에서 imageUrl만 추출하여 string[]로 변환
-              onChange={(imgs) => handleChange("subImages", imgs)}
-            />
-          </div>
+        {/* 상세 이미지 URL 추가 */}
+        <div className="mb-4">
+          <Input
+            label="상세 이미지 URL 추가"
+            value={subImageUrl}
+            onChange={(e) => setSubImageUrl(e.target.value)}
+            placeholder="상세 이미지 URL을 입력하세요"
+          />
+          <Button
+            className="mt-2"
+            onClick={handleAddSubImage}
+            disabled={!subImageUrl}  // 입력된 URL이 없으면 버튼 비활성화
+          >
+            추가
+          </Button>
+        </div>
+
+        {/* 추가된 상세 이미지 목록 */}
+        <div className="mb-4">
+          {(product.subImages && product.subImages.length > 0) && (
+            <div>
+              <p className="font-semibold">상세 이미지 목록</p>
+              <div className="space-y-2">
+                {product.subImages.map((imgUrl, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <img
+                      src={`${IMAGE_BASE_URL}${imgUrl.imageUrl}`}  // 미리보기
+                      alt={`sub-image-${idx}`}
+                      className="w-20 h-20 object-cover"
+                    />
+                    <Button
+                      className="text-red-500"
+                      onClick={() => removeSubImage(idx)}
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
 
           {/* 우측: 상품 정보 */}
           <div className="flex flex-col gap-6 md:w-1/2">
@@ -500,6 +573,5 @@ export default function ProductNewPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

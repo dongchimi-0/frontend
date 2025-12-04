@@ -41,7 +41,7 @@ export default function ProductInfo({ product }: { product: Product }) {
 
   // 색상 옵션 여부
   const hasColorOptions = product.options?.some(opt => !!opt.colorCode);
-
+  console.log(product.options)
   return (
     <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-6">
 
@@ -105,11 +105,11 @@ export default function ProductInfo({ product }: { product: Product }) {
                         optionValue: opt.optionValue,
                         stock: opt.stock,
                         colorCode: opt.colorCode,
+                        sellPrice: opt.sellPrice,
                       })
                     }
-                    className={`w-10 h-10 rounded-full border-2 transition flex items-center justify-center ${
-                      isSelected ? "border-black" : "border-gray-200"
-                    } ${isSoldOut ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`w-10 h-10 rounded-full border-2 transition flex items-center justify-center ${isSelected ? "border-black" : "border-gray-200"
+                      } ${isSoldOut ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                     style={{ backgroundColor: opt.colorCode }}
                     title={`${opt.optionValue} ${isSoldOut ? "(품절)" : `(${opt.stock}개)`}`}
                   >
@@ -144,18 +144,25 @@ export default function ProductInfo({ product }: { product: Product }) {
                             optionValue: opt.optionValue,
                             stock: opt.stock,
                             colorCode: opt.colorCode,
+                            sellPrice: opt.sellPrice,
                           })
                         }
-                        className={`p-2 flex justify-between items-center hover:bg-gray-100 cursor-pointer ${
-                          isSelected ? "bg-gray-200" : ""
-                        } ${isSoldOut ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`p-2 flex justify-between items-center hover:bg-gray-100 cursor-pointer ${isSelected ? "bg-gray-200" : ""
+                          } ${isSoldOut ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <span>{opt.optionValue}</span>
-                        {isSoldOut ? (
-                          <span className="text-red-500 text-xs font-semibold">품절</span>
-                        ) : (
-                          <span className="text-gray-400 text-xs">{opt.stock}개</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {/* ★ 옵션별 가격 */}
+                          <span className="text-sm font-semibold text-gray-700">
+                            {Number(opt.sellPrice).toLocaleString()}원
+                          </span>
+
+                          {isSoldOut ? (
+                            <span className="text-red-500 text-xs font-semibold">품절</span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">{opt.stock}개</span>
+                          )}
+                        </div>
                       </li>
                     );
                   })}
@@ -174,7 +181,12 @@ export default function ProductInfo({ product }: { product: Product }) {
             className="border p-4 rounded-xl shadow flex justify-between items-center w-full bg-white"
           >
             <div className="flex-1">
-              <p className="font-medium text-black">{item.optionValue}</p>
+              <p className="font-medium text-black">
+                {item.optionValue}
+                <span className="ml-2 text-gray-600 text-sm">
+                  {Number(item.sellPrice).toLocaleString()}원
+                </span>
+              </p>
 
               {/* 수량 조절 */}
               <div className="flex items-center gap-3 mt-2">
@@ -212,7 +224,7 @@ export default function ProductInfo({ product }: { product: Product }) {
 
             <button
               onClick={() => setSelectedOptions(prev => prev.filter(p => p.optionId !== item.optionId))}
-              className="text-gray-400 hover:text-black transition ml-4"
+              className="text-red-400 hover:text-red-600 transition cursor-pointer"
             >
               <X size={20} />
             </button>
@@ -224,9 +236,8 @@ export default function ProductInfo({ product }: { product: Product }) {
       <div className="flex flex-col md:flex-row items-center gap-4 w-full">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-2 p-2 border rounded-lg transition-all w-full md:w-auto ${
-            liked ? "bg-rose-50 border-rose-300" : "bg-white border-gray-300"
-          }`}
+          className={`flex items-center gap-2 p-2 border rounded-lg transition-all w-full md:w-auto cursor-pointer ${liked ? "bg-rose-50 border-rose-300" : "bg-white border-gray-300"
+            }`}
         >
           <Heart
             className={`w-7 h-7 ${liked ? "fill-rose-500 stroke-rose-500" : "stroke-gray-400"}`}
@@ -245,7 +256,7 @@ export default function ProductInfo({ product }: { product: Product }) {
 
         <button
           onClick={handleBuyNow}
-          className="flex-1 w-full bg-black text-white py-3 rounded-xl hover:bg-gray-900 transition cursor-pointer"
+          className="flex-1 w-full bg-white text-black py-3 rounded-xl hover:bg-gray-100 transition cursor-pointer border border-gray-300"
         >
           구매하기
         </button>

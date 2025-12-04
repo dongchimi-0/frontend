@@ -23,8 +23,12 @@ export interface AdminProduct {
   sellPrice: number;          // sell_price (기본 판매가)
   stock: number;              // stock (단일 상품일 때 유의미)
   isOption: boolean;          // is_option (true = 옵션 상품, false = 단품)
-  mainImg?: string;           // main_img
-  subImages?: ProductImage[];       
+  mainImg: string;           // main_img
+  subImages?: {         // subImages를 선택적 배열로 정의
+    imageUrl: string;
+    sortOrder: number;
+    productId: number;
+  }[];       
   productStatus: number;      // product_status (10,20,21,40,90 등)
   isShow: boolean;            // is_show
 
