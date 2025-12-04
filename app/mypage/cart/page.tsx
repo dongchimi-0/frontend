@@ -112,7 +112,15 @@ export default function CartPage() {
                     {item.productName}
                   </p>
 
-                  {/* 품절 상태 */}
+                {/* 옵션 출력 */}
+                {item.optionValue && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    {item.optionTitle ? `${item.optionTitle}: ` : ""}
+                    <span className="font-medium">{item.optionValue}</span>
+                  </p>
+                )}
+
+                {/* 품절 상태 */}
                   {item.soldOut && (
                     <p className="text-red-500 text-sm font-semibold mt-1">
                       품절된 상품입니다
