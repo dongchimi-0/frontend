@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 import Input from "../../ui/Input";
 import Button from "../../ui/Button";
-import MultiImageUpload from "../../ui/MultiImageUpload";
 import { Plus, Trash2 } from "lucide-react";
 
 import type { AdminProduct, AdminProductOption } from "@/types/adminProduct";
@@ -34,6 +33,14 @@ export default function ProductNewPage() {
     categoryCode: "",
     options: [],
   });
+
+
+  // ------------------------------
+  // 총 재고 계산 
+  // ------------------------------
+  const totalStock = product.isOption
+    ? product.options.reduce((total, option) => total + option.stock, 0)  // 옵션 상품일 경우
+    : product.stock;
 
   // 카테고리 트리
   const [categoryTree, setCategoryTree] = useState<CategoryTree | null>(null);
@@ -428,6 +435,19 @@ export default function ProductNewPage() {
                 onChange={(e) => handleChange("isOption", e.target.checked)}
               />
               <span className="ml-2 text-sm">옵션 상품 여부</span>
+            </div>
+
+            {/* 총 재고 표시 (옵션 상품일 경우 합산된 재고 값 표시) */}
+            <div className="mb-4">
+              {product.isOption ? (
+                <div>
+                  <h3 className="font-semibold">총 재고: {totalStock}</h3>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="font-semibold">총 재고: {product.stock}</h3>
+                </div>
+              )}
             </div>
 
             {/* 옵션 목록 */}

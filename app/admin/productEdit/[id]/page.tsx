@@ -61,7 +61,7 @@ export default function ProductEditPage() {
           stock: raw.stock ?? 0,
           isOption: !!raw.isOption,
           mainImg: raw.mainImg ?? "",
-          subImages: raw.subImages ?? [],
+          images: raw.images ?? [],
           productStatus: raw.productStatus ?? 10,
           isShow: raw.isShow ?? true,
           categoryCode: raw.categoryCode ?? "",
@@ -232,8 +232,8 @@ export default function ProductEditPage() {
             {/* 필요하면 상세 이미지도 수정 가능하게 */}
             <p className="font-semibold mt-4">상세 이미지</p>
             <MultiImageUpload
-              images={product.subImages || []}
-              onChange={(imgs) => handleChange("subImages", imgs)}
+              images={product.images || []}
+              onChange={(imgs) => handleChange("images", imgs)}
             />
           </div>
 
