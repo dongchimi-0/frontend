@@ -27,6 +27,7 @@ interface Address {
   phone: string;
   address: string;
   detail: string;
+  zipcode: string;
   isDefault: boolean;
 }
 
@@ -46,6 +47,7 @@ export default function CheckoutPage() {
     phone: "",
     address: "",
     detail: "",
+    zipcode: "",
     isDefault: false,
   });
 
@@ -319,6 +321,7 @@ export default function CheckoutPage() {
         phone: "",
         address: "",
         detail: "",
+        zipcode: "",
         isDefault: false,
       });
     } catch (err) {
@@ -436,6 +439,7 @@ export default function CheckoutPage() {
                 }
                 className="w-full border rounded-lg px-3 py-2"
               />
+
               <input
                 type="text"
                 placeholder="전화번호"
@@ -443,21 +447,52 @@ export default function CheckoutPage() {
                 onChange={(e) =>
                   setNewAddress({
                     ...newAddress,
-                    phone: formatPhoneNumber(e.target.value)
+                    phone: formatPhoneNumber(e.target.value),
                   })
                 }
                 maxLength={13}
                 className="w-full border rounded-lg px-3 py-2"
               />
+
+              {/* 🔥 우편번호 + 주소찾기 버튼 */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="우편번호"
+                  value={newAddress.zipcode}
+                  readOnly
+                  className="w-full border rounded-lg px-3 py-2"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    new (window as any).daum.Postcode({
+                      oncomplete(data: any) {
+                        setNewAddress((prev) => ({
+                          ...prev,
+                          zipcode: data.zonecode,
+                          address: data.roadAddress || data.jibunAddress,
+                        }));
+                      },
+                    }).open()
+                  }
+                  className="px-3 py-2 border rounded-lg bg-white hover:bg-gray-100 text-sm"
+                >
+                  주소 찾기
+                </button>
+              </div>
+
+              {/* 주소 (자동 입력) */}
               <input
                 type="text"
                 placeholder="주소"
                 value={newAddress.address}
-                onChange={(e) =>
-                  setNewAddress({ ...newAddress, address: e.target.value })
-                }
+                readOnly
                 className="w-full border rounded-lg px-3 py-2"
               />
+
+              {/* 상세주소 */}
               <input
                 type="text"
                 placeholder="상세 주소"
@@ -490,8 +525,8 @@ export default function CheckoutPage() {
               </button>
             </div>
           )}
-        </div>
-
+        </div> 
+        
         {/* ----------------------------- */}
         {/* 주문 상품 */}
         {/* ----------------------------- */}
