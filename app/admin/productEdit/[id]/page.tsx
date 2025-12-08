@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import Input from "../../../ui/Input";
 import Button from "../../../ui/Button";
 import { Plus, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 import type { AdminProduct, AdminProductOption } from "@/types/adminProduct";
 import type { CategoryTree } from "@/types/category";
@@ -15,7 +16,7 @@ export default function ProductEditPage() {
   // const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL; 
   const router = useRouter();
 
-  
+
   const params = useParams();
   const productId = params?.id;
 
@@ -248,7 +249,8 @@ export default function ProductEditPage() {
     if (!product) return;
 
     if (!product.productName || !product.sellPrice) {
-      return alert("필수 항목이 비어있습니다.");
+      toast.error("필수 항목이 비어있습니다.");
+      return;
     }
 
     const payload: AdminProduct = {
@@ -256,10 +258,10 @@ export default function ProductEditPage() {
       stock: product.isOption ? 0 : product.stock,
       options: product.isOption
         ? product.options.map((opt) => ({
-            ...opt,
-            // DB에 저장할 최종 옵션가
-            sellPrice: (product.sellPrice || 0) + (opt.extraPrice || 0),
-          }))
+          ...opt,
+          // DB에 저장할 최종 옵션가
+          sellPrice: (product.sellPrice || 0) + (opt.extraPrice || 0),
+        }))
         : [],
     };
 
@@ -274,13 +276,13 @@ export default function ProductEditPage() {
       if (!res.ok) throw new Error("저장 실패");
 
       // 저장 성공 후 메시지 출력
-      alert("상품 정보가 저장되었습니다.");
+      toast.success("상품 정보가 저장되었습니다.");
 
       // 상품 목록 페이지로 이동
       router.push("/admin/productList");
     } catch (err) {
       console.error(err);
-      alert("상품 저장 중 오류가 발생했습니다.");
+      toast.error("상품 저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -310,28 +312,28 @@ export default function ProductEditPage() {
           상품 수정
         </h1>
 
-          {/* 왼쪽: 이미지 */}
+        {/* 왼쪽: 이미지 */}
+        <div className="mb-4">
+          <Input
+            label="대표 이미지 URL"
+            value={product.mainImg}
+            onChange={(e) => setProduct({ ...product, mainImg: e.target.value })}
+            placeholder="대표 이미지 URL을 입력하세요"
+          />
+
+          {/* 대표 이미지 미리보기 */}
+          {product.mainImg && (
+            <div className="mt-2">
+              <img
+                // src={`${IMAGE_BASE_URL}${product.mainImg}`}
+                src={`${product.mainImg}`}
+                alt="대표 이미지 미리보기"
+                className="w-120px h-240px object-contain"
+              />
+            </div>
+          )}
+
           <div className="mb-4">
-            <Input
-              label="대표 이미지 URL"
-              value={product.mainImg}
-              onChange={(e) => setProduct({ ...product, mainImg: e.target.value })}
-              placeholder="대표 이미지 URL을 입력하세요"
-            />
-
-            {/* 대표 이미지 미리보기 */}
-            {product.mainImg && (
-              <div className="mt-2">
-                <img
-                  // src={`${IMAGE_BASE_URL}${product.mainImg}`}
-                  src={`${product.mainImg}`}
-                  alt="대표 이미지 미리보기"
-                  className="w-120px h-240px object-contain"
-                />
-              </div>
-            )}
-
-            <div className="mb-4">
             {/* 상세 이미지 URL 입력 */}
             <Input
               label="상세 이미지 URL 추가"
@@ -395,11 +397,10 @@ export default function ProductEditPage() {
                   {Object.entries(categoryTree).map(([bigCode, bigNode]) => (
                     <button
                       key={bigCode}
-                      className={`px-3 py-1 rounded-full border text-sm transition cursor-pointer ${
-                        selectedBig === bigCode
+                      className={`px-3 py-1 rounded-full border text-sm transition cursor-pointer ${selectedBig === bigCode
                           ? "bg-black text-white border-black"
                           : "bg-gray-100 border-gray-200 hover:bg-gray-200"
-                      }`}
+                        }`}
                       onClick={() => {
                         setSelectedBig(bigCode);
                         setSelectedMid("");
@@ -418,11 +419,10 @@ export default function ProductEditPage() {
                       ([midCode, midNode]) => (
                         <button
                           key={midCode}
-                          className={`px-3 py-1 rounded-full border text-sm transition cursor-pointer ${
-                            selectedMid === midCode
+                          className={`px-3 py-1 rounded-full border text-sm transition cursor-pointer ${selectedMid === midCode
                               ? "bg-black text-white border-black"
                               : "bg-gray-100 border-gray-200 hover:bg-gray-200"
-                          }`}
+                            }`}
                           onClick={() => {
                             setSelectedMid(midCode);
                             handleChange("categoryCode", "");
@@ -443,11 +443,10 @@ export default function ProductEditPage() {
                     ).map(([leafCode, leafName]) => (
                       <button
                         key={leafCode}
-                        className={`px-3 py-1 rounded-full border text-sm transition cursor-pointer ${
-                          product.categoryCode === leafCode
+                        className={`px-3 py-1 rounded-full border text-sm transition cursor-pointer ${product.categoryCode === leafCode
                             ? "bg-black text-white border-black"
                             : "bg-gray-100 border-gray-200 hover:bg-gray-200"
-                        }`}
+                          }`}
                         onClick={() => handleChange("categoryCode", leafCode)}
                       >
                         {leafName}
