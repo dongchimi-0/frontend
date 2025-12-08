@@ -324,7 +324,7 @@ export default function MyInfoPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                value={member.zipcode}
+                value={member.zipcode ?? ""}
                 onChange={(e) => setMember({ ...member, zipcode: e.target.value })}
                 placeholder="우편번호"
                 readOnly
