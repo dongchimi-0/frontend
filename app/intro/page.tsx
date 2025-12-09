@@ -1,6 +1,5 @@
 "use client";
-
-import Intro from "./intro";
+import Intro from "./Intro";
 
 export default function IntroPage() {
   // onFinish 함수 정의
