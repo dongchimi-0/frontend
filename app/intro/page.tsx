@@ -1,10 +1,10 @@
-"use client";
-
-import { useEffect, useState } from "react";
-
 interface IntroProps {
   onFinish: () => void;
 }
+
+"use client";
+
+import { useEffect, useState } from "react";
 
 export default function IntroPage({ onFinish }: IntroProps) {
   const introLines = ["Your Daily", "Journey"];
