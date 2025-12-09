@@ -27,7 +27,7 @@ export default function ClientRoot({ children }: { children: ReactNode }) {
   if (showIntro === null) return null;
 
   // 인트로 표시
-  if (showIntro) return <IntroPage onFinish={handleFinishIntro} />;
+  if (showIntro) return <IntroPage />;
 
   return (
     <>
