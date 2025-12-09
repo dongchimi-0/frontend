@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState, ReactNode } from "react";
-import Intro from "./intro/intro";
+import Intro from "./intro/Intro";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
