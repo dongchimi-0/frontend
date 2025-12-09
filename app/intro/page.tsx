@@ -12,7 +12,7 @@ export default function IntroPage() {
     const seen = sessionStorage.getItem("introSeen");
 
     if (seen === "true") {
-      router.push("/"); // 이미 본 경우 바로 홈 이동
+      router.replace("/"); // 이미 본 경우 즉시 이동
       return;
     }
 
@@ -20,15 +20,15 @@ export default function IntroPage() {
 
     const timer = setTimeout(() => {
       sessionStorage.setItem("introSeen", "true");
-      router.push("/"); // 3초 후 홈 이동
+      router.replace("/");
     }, 3000);
 
     return () => clearTimeout(timer);
   }, [router]);
 
-  const goHome = () => {
+  const handleClick = () => {
     sessionStorage.setItem("introSeen", "true");
-    router.push("/"); // 버튼 클릭 시 홈 이동
+    router.replace("/");
   };
 
   const renderLine = (line: string, lineIdx: number) => {
@@ -80,7 +80,7 @@ export default function IntroPage() {
       ))}
 
       <button
-        onClick={goHome}
+        onClick={handleClick}
         className="mt-10 px-8 py-4 bg-gray-700 text-white rounded-full text-xl font-semibold cursor-pointer"
       >
         Shop Now
