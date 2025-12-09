@@ -23,8 +23,7 @@ interface MainCategory {
 }
 
 export default function HomePage() {
-  // ⭐ 처음엔 무조건 인트로 띄우고 CSR 이후에 판단 (배포환경에서 가장 안정적)
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState<boolean | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const BASE = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
@@ -49,15 +48,10 @@ export default function HomePage() {
   const truncate = (text: string, max = 15) =>
     text.length > max ? text.slice(0, max) + "..." : text;
 
-  // ⭐ 인트로 체크 (CSR 이후)
+  // ▣ Intro 체크
   useEffect(() => {
     const seen = sessionStorage.getItem("introSeen");
-
-    if (seen === "true") {
-      setShowIntro(false);
-    } else {
-      setShowIntro(true);
-    }
+    setShowIntro(seen === "true" ? false : true);
   }, []);
 
   // ▣ Main categories
@@ -91,23 +85,23 @@ export default function HomePage() {
   const filteredProducts =
     selectedMain && categoryTree
       ? (() => {
-          const midList = categoryTree[selectedMain].children;
-          const leafCodes = Object.values(midList).flatMap(
-            (mid: any) => Object.keys(mid.children)
-          );
-          return products.filter((p) => leafCodes.includes(p.categoryCode));
-        })()
+        const midList = categoryTree[selectedMain].children;
+        const leafCodes = Object.values(midList).flatMap(
+          (mid: any) => Object.keys(mid.children)
+        );
+        return products.filter((p) => leafCodes.includes(p.categoryCode));
+      })()
       : products;
 
   const totalPages = Math.ceil(filteredProducts.length / pageSize);
   const startIdx = (currentPage - 1) * pageSize;
   const currentProducts = filteredProducts.slice(startIdx, startIdx + pageSize);
 
-  if (showIntro) return <IntroPage />; // 체크 완료 전 렌더링 X
+  if (showIntro === null) return null; // 체크 완료 전 렌더링 X
 
   // ▣ 렌더링
   return showIntro ? (
-    <IntroPage />
+    <IntroPage onFinish={() => setShowIntro(false)} />
   ) : (
     <div className="w-full overflow-x-hidden">
 
