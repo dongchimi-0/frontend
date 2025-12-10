@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import IntroPage from "./intro/page";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
@@ -23,9 +22,12 @@ interface MainCategory {
 }
 
 export default function HomePage() {
+<<<<<<< HEAD
   // ⭐ 처음엔 무조건 인트로 띄우고 CSR 이후에 판단 (배포환경에서 가장 안정적)
   const [showIntro, setShowIntro] = useState(true);
 
+=======
+>>>>>>> upstream/main
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const BASE = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
 
@@ -54,6 +56,7 @@ export default function HomePage() {
   const truncate = (text: string, max = 15) =>
     text.length > max ? text.slice(0, max) + "..." : text;
 
+<<<<<<< HEAD
 
   // ⭐ 인트로 체크 (CSR 이후)
   useEffect(() => {
@@ -66,6 +69,8 @@ export default function HomePage() {
     }
   }, []);
 
+=======
+>>>>>>> upstream/main
   // ▣ Main categories
   useEffect(() => {
     fetch(`${API_URL}/api/categories/main`)
@@ -109,12 +114,17 @@ export default function HomePage() {
   const startIdx = (currentPage - 1) * pageSize;
   const currentProducts = filteredProducts.slice(startIdx, startIdx + pageSize);
 
+<<<<<<< HEAD
   if (showIntro) return <IntroPage />; // 체크 완료 전 렌더링 X
 
   // ▣ 렌더링
   return showIntro ? (
     <IntroPage />
   ) : (
+=======
+  // 렌더링
+  return (
+>>>>>>> upstream/main
     <div className="w-full overflow-x-hidden">
 
       {/* ▣ 1. 배너 */}
@@ -194,15 +204,15 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {currentProducts.map((p, index) => (
+            {currentProducts.map((p) => (
               <Link
-                key={`${p.productId}-${index}`}  // key가 중복되지 않도록 productId와 index 결합
+                key={p.productId}
                 href={`/product/${p.productId}`}
                 className="text-center bg-white rounded-2xl shadow hover:shadow-xl transition flex flex-col cursor-pointer overflow-hidden"
               >
                 <div className="w-full rounded-xl overflow-hidden flex items-center justify-center bg-white">
                   <img
-                    src={`${BASE}${p.mainImg}` || "/images/default_main.png"}
+                    src={p.mainImg ? `${BASE}${p.mainImg}` : "/images/default_main.png"}
                     alt={p.productName}
                     className="w-full h-full object-contain"
                   />

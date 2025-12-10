@@ -1,15 +1,20 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+<<<<<<< HEAD
 import { useEffect, useState, ReactNode } from "react";
 import Intro from "./intro/Intro";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+=======
+import { ReactNode } from "react";
+>>>>>>> upstream/main
 
 export default function ClientRoot({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
 
+<<<<<<< HEAD
   // 🔹 인트로 상태
   const [showIntro, setShowIntro] = useState<boolean | null>(null);
 
@@ -29,6 +34,8 @@ export default function ClientRoot({ children }: { children: ReactNode }) {
   // 인트로 표시
   if (showIntro) return <Intro onFinish={handleIntroFinish} />; // Intro에 onFinish 전달
 
+=======
+>>>>>>> upstream/main
   return (
     <>
       {!isAdmin && <Header />}
